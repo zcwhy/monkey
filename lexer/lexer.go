@@ -67,7 +67,6 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LT, l.ch)
 	case '>':
 		tok = newToken(token.GT, l.ch)
-
 	case 0:
 		tok.Type = token.EOF
 		tok.Literal = ""
@@ -92,10 +91,10 @@ func (l *Lexer) NextToken() token.Token {
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
 		l.ch = 0
-		return
+	} else {
+		l.ch = l.input[l.readPosition]
 	}
 
-	l.ch = l.input[l.readPosition]
 	l.position = l.readPosition
 	l.readPosition++
 }
