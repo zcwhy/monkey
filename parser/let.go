@@ -13,13 +13,15 @@ func (p *Parser) parseLetStatement() ast.Statement {
 	}
 
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
-
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
 
-	for !p.curTokenIs(token.SEMICOLON) {
-		p.nextToken()
+	p.nextToken()
+	stmt.Value = p.parseExpression(LOWEST)
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
 	}
+
 	return stmt
 }

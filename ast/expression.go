@@ -10,19 +10,12 @@ type ExpressionStatement struct {
 	Expression Expression
 }
 
-func (e *ExpressionStatement) TokenLiteral() string {
-	return e.Token.Literal
-}
-
-func (e *ExpressionStatement) statementNode() {
-
-}
-
+func (e *ExpressionStatement) TokenLiteral() string { return e.Token.Literal }
+func (e *ExpressionStatement) statementNode()       {}
 func (e *ExpressionStatement) String() string {
 	if e.Expression != nil {
 		return e.Expression.String()
 	}
-
 	return ""
 }
 
@@ -31,17 +24,9 @@ type IntegerLiteral struct {
 	Value int64
 }
 
-func (i *IntegerLiteral) TokenLiteral() string {
-	return i.Token.Literal
-}
-
-func (i *IntegerLiteral) expressionNode() {
-
-}
-
-func (i *IntegerLiteral) String() string {
-	return i.Token.Literal
-}
+func (i *IntegerLiteral) TokenLiteral() string { return i.Token.Literal }
+func (i *IntegerLiteral) expressionNode()      {}
+func (i *IntegerLiteral) String() string       { return i.Token.Literal }
 
 type PrefixExpression struct {
 	Token    token.Token
@@ -49,20 +34,35 @@ type PrefixExpression struct {
 	Right    Expression
 }
 
-func (pe *PrefixExpression) TokenLiteral() string {
-	return pe.Token.Literal
-}
-
-func (pe *PrefixExpression) expressionNode() {
-
-}
-
+func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *PrefixExpression) expressionNode()      {}
 func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
 	out.WriteString(pe.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
+type InfixExpression struct {
+	Token    token.Token
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (i *InfixExpression) TokenLiteral() string { return i.Token.Literal }
+func (i *InfixExpression) expressionNode()      {}
+func (i *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(i.Left.String())
+	out.WriteString(" " + i.Operator + " ")
+	out.WriteString(i.Right.String())
 	out.WriteString(")")
 
 	return out.String()

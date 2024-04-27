@@ -8,8 +8,12 @@ import (
 func (p *Parser) parseReturnStatement() ast.Statement {
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 
-	for !p.curTokenIs(token.SEMICOLON) {
-		p.nextToken()
+	p.nextToken()
+	stmt.ReturnValue = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.SEMICOLON) {
+		return nil
 	}
+
 	return stmt
 }
