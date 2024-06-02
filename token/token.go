@@ -41,6 +41,9 @@ const (
 	RETURN   = "return"
 	TRUE     = "true"
 	FALSE    = "false"
+
+	// DataType
+	STRING = "STRING"
 )
 
 type Token struct {
