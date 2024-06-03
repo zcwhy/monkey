@@ -269,21 +269,23 @@ func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Ob
 }
 
 func applyFunction(fn object.Object, args []object.Object) object.Object {
-	function, ok := fn.(*object.Function)
-	if !ok {
+	switch fn := fn.(type) {
+	case *object.Function:
+		env := object.NewEnclosedEnvironment(fn.Env)
+		for paramIdx, param := range fn.Parameters {
+			env.Set(param.Value, args[paramIdx])
+		}
+
+		evaluated := Eval(fn.Body, env)
+		if returnValue, ok := evaluated.(*object.ReturnValue); ok {
+			return returnValue.Value
+		}
+		return evaluated
+	case *object.Builtin:
+		return fn.Fn(args...)
+	default:
 		return newError("not a function: %s", fn.Type())
 	}
-
-	env := object.NewEnclosedEnvironment(function.Env)
-	for paramIdx, param := range function.Parameters {
-		env.Set(param.Value, args[paramIdx])
-	}
-
-	evaluated := Eval(function.Body, env)
-	if returnValue, ok := evaluated.(*object.ReturnValue); ok {
-		return returnValue.Value
-	}
-	return evaluated
 }
 
 func newError(format string, a ...interface{}) *object.Error {

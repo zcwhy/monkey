@@ -16,6 +16,8 @@ func Start(input io.Reader, output io.Writer) {
 	scanner := bufio.NewScanner(input)
 	env := object.NewEnvironment()
 
+	evaluator.InstallBuiltinFn(env)
+
 	for {
 		fmt.Fprintf(output, PROMPT)
 		scanned := scanner.Scan()
