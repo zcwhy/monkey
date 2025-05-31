@@ -12,6 +12,7 @@ type OpCode byte
 
 const (
 	OpConstant OpCode = iota
+	OpAdd
 )
 
 func Make(opCode OpCode, opreands ...int) []byte {
@@ -46,7 +47,7 @@ func Disassemble(instructions [][]byte) string {
 	pos := 0
 	for _, instruction := range instructions {
 		def, _ := LookUp(OpCode(instruction[0]))
-		opreands, err := readOpreands(instruction)
+		opreands, err := ReadOpreands(instruction)
 		if err != nil {
 			return ""
 		}
@@ -58,7 +59,7 @@ func Disassemble(instructions [][]byte) string {
 	return out.String()
 }
 
-func readOpreands(instruction []byte) ([]int, error) {
+func ReadOpreands(instruction []byte) ([]int, error) {
 	def, err := LookUp(OpCode(instruction[0]))
 	if err != nil {
 		return nil, err

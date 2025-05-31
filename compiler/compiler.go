@@ -53,6 +53,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if err != nil {
 			return err
 		}
+		c.emit(code.OpAdd)
 
 	case *ast.IntegerLiteral:
 		integer := &object.Integer{Value: node.Value}

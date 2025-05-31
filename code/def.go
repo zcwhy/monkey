@@ -8,7 +8,8 @@ type Definition struct {
 }
 
 var instructionDefinitions = map[OpCode]*Definition{
-	OpConstant: &Definition{"OpConstant", []int{2}},
+	OpConstant: {"OpConstant", []int{2}},
+	OpAdd:      {"OpAdd", []int{}},
 }
 
 func LookUp(code OpCode) (*Definition, error) {
