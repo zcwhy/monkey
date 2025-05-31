@@ -13,6 +13,9 @@ type OpCode byte
 const (
 	OpConstant OpCode = iota
 	OpAdd
+	OpSub
+	OpMul
+	OpDev
 )
 
 func Make(opCode OpCode, opreands ...int) []byte {
