@@ -9,9 +9,12 @@ import (
 
 const StackSize = 2048
 
+const GlobalsSize = 65536
+
 type VM struct {
 	intructions code.Instructions
 	constant    []object.Object
+	globals     []object.Object
 
 	stack []object.Object
 	sp    int
@@ -21,8 +24,10 @@ func New(byteCode *compiler.Bytecode) *VM {
 	return &VM{
 		intructions: byteCode.Instructions,
 		constant:    byteCode.Constants,
-		stack:       make([]object.Object, 2048),
-		sp:          -1,
+		globals:     make([]object.Object, GlobalsSize),
+
+		stack: make([]object.Object, 2048),
+		sp:    -1,
 	}
 }
 
@@ -43,8 +48,17 @@ func (v *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpTrue:
+			v.push(&object.Boolean{Value: true})
+		case code.OpSetGlobal:
+			symbolIndex := code.ReadUint16(instruction[1:])
+			v.globals[symbolIndex] = v.pop()
 
+		case code.OpGetGlobal:
+			symbolIndex := code.ReadUint16(instruction[1:])
+			v.push(v.globals[symbolIndex])
 		}
+
 	}
 	return nil
 }

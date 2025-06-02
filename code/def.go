@@ -8,11 +8,15 @@ type Definition struct {
 }
 
 var instructionDefinitions = map[OpCode]*Definition{
-	OpConstant: {"OpConstant", []int{2}},
-	OpAdd:      {"OpAdd", []int{}},
-	OpSub:      {"OpSub", []int{}},
-	OpMul:      {"OpSub", []int{}},
-	OpDev:      {"OpSub", []int{}},
+	OpConstant:      {"OpConstant", []int{2}},
+	OpAdd:           {"OpAdd", []int{}},
+	OpSub:           {"OpSub", []int{}},
+	OpMul:           {"OpSub", []int{}},
+	OpDev:           {"OpSub", []int{}},
+	OpTrue:          {"OpTrue", []int{}},
+	OpJumpNotTruthy: {"OpJumpNotTruthy", []int{2}}, // 这里操作数是跳转到第几条指令
+	OpSetGlobal:     {"OpSetGlobal", []int{2}},
+	OpGetGlobal:     {"OpSetGlobal", []int{2}},
 }
 
 func LookUp(code OpCode) (*Definition, error) {

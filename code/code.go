@@ -16,6 +16,10 @@ const (
 	OpSub
 	OpMul
 	OpDev
+	OpTrue
+	OpJumpNotTruthy
+	OpSetGlobal
+	OpGetGlobal
 )
 
 func Make(opCode OpCode, opreands ...int) []byte {
@@ -44,10 +48,11 @@ func Make(opCode OpCode, opreands ...int) []byte {
 	return instruction
 }
 
-func Disassemble(instructions [][]byte) string {
+func Disassemble(instructions Instructions) string {
 	var out bytes.Buffer
 
 	pos := 0
+	fmt.Fprintf(&out, "\n")
 	for _, instruction := range instructions {
 		def, _ := LookUp(OpCode(instruction[0]))
 		opreands, err := ReadOpreands(instruction)
@@ -78,6 +83,10 @@ func ReadOpreands(instruction []byte) ([]int, error) {
 		offset += width
 	}
 	return opreands, nil
+}
+
+func ReadUint16(instruction []byte) uint16 {
+	return binary.BigEndian.Uint16(instruction)
 }
 
 func fomatOpreands(opreands []int) string {

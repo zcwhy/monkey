@@ -12,6 +12,7 @@ import (
 type Compiler struct {
 	Instructions code.Instructions
 	Constants    []object.Object
+	SymbolTable
 }
 
 type Bytecode struct {
@@ -25,7 +26,9 @@ func parse(input string) *ast.Program {
 }
 
 func New() *Compiler {
-	return &Compiler{}
+	return &Compiler{
+		SymbolTable: *NewSymbolTable(),
+	}
 }
 
 func (c *Compiler) Compile(node ast.Node) error {
@@ -71,6 +74,58 @@ func (c *Compiler) Compile(node ast.Node) error {
 	case *ast.IntegerLiteral:
 		integer := &object.Integer{Value: node.Value}
 		c.emit(code.OpConstant, c.addConstant(integer))
+
+	case *ast.IfExpression:
+		err := c.Compile(node.Condition)
+		if err != nil {
+			return err
+		}
+
+		pos := c.emit(code.OpJumpNotTruthy, 9999)
+
+		err = c.Compile(node.Consequence)
+		if err != nil {
+			return err
+		}
+
+		c.changeOpreand(pos, len(c.Instructions))
+
+		// err = c.Compile(node.Alternative)
+		// if err != nil {
+		// 	return err
+		// }
+
+	case *ast.BlockStatement:
+		fmt.Println(node.Statements)
+		for _, statement := range node.Statements {
+			if err := c.Compile(statement); err != nil {
+				return err
+			}
+		}
+	case *ast.LetStatement:
+		err := c.Compile(node.Value)
+		if err != nil {
+			return err
+		}
+
+		entry := c.SymbolTable.Set(node.Name.Value, GlobalScope)
+		c.emit(code.OpSetGlobal, entry.Index)
+
+	case *ast.Boolean:
+		if node.Value {
+			c.emit(code.OpTrue)
+		}
+	case *ast.Identifier:
+		entry, ok := c.SymbolTable.Get(node.Value)
+		if !ok {
+			return fmt.Errorf("undefined variable %s", node.Value)
+		}
+
+		c.emit(code.OpGetGlobal, entry.Index)
+
+		// case *ast.CallExpression:
+
+		// 	if node.Name ==
 	}
 
 	return nil
@@ -87,6 +142,18 @@ func (c *Compiler) addConstant(constant object.Object) int {
 	return len(c.Constants) - 1
 }
 
-func (c *Compiler) emit(opCode code.OpCode, opreands ...int) {
+func (c *Compiler) emit(opCode code.OpCode, opreands ...int) int {
 	c.Instructions = append(c.Instructions, code.Make(opCode, opreands...))
+	return len(c.Instructions) - 1
+}
+
+func (c *Compiler) changeOpreand(pos int, opreand ...int) {
+	opCode := code.OpCode(c.Instructions[pos][0])
+
+	newInstruction := code.Make(opCode, opreand...)
+	c.replaceInstrucion(pos, newInstruction)
+}
+
+func (c *Compiler) replaceInstrucion(pos int, newInstruction []byte) {
+	c.Instructions[pos] = newInstruction
 }

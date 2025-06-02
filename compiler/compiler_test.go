@@ -30,6 +30,72 @@ func TestIntegerArithmetic(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestConditionals(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+				if (true) { 10 };
+				`,
+			expectedConstants: []interface{}{10},
+			expectedInstructions: code.Instructions{
+				// 0000
+				code.Make(code.OpTrue),
+				// 0001
+				code.Make(code.OpJumpNotTruthy, 3),
+				// 0003
+				code.Make(code.OpConstant, 0),
+			},
+		},
+	}
+
+	runCompilerTests(t, tests)
+}
+
+func TestGlobalLetStatements(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+	let one = 1;
+	let two = 2;
+	`,
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpSetGlobal, 1),
+			},
+		},
+		{
+			input: `
+	let one = 1;
+	one;
+	`,
+			expectedConstants: []interface{}{1}, expectedInstructions: code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+				code.Make(code.OpGetGlobal, 0),
+			}},
+		{
+			input: `
+	let one = 1;
+	let two = one;
+	two;
+	`,
+			expectedConstants: []interface{}{1},
+			expectedInstructions: code.Instructions{
+
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpSetGlobal, 1),
+				code.Make(code.OpGetGlobal, 1),
+			}},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 	t.Helper()
 
@@ -68,7 +134,7 @@ func testInstructions(
 	for i, ins := range expected {
 		if string(actual[i]) != string(ins) {
 			return fmt.Errorf("wrong instruction at %d.\nwant=%q\ngot =%q",
-				i, ins, actual[i])
+				i, code.Disassemble(expected), code.Disassemble(actual))
 		}
 	}
 
