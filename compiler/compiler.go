@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"monkey/ast"
 	"monkey/code"
-	"monkey/lexer"
 	"monkey/object"
-	"monkey/parser"
 )
 
 type Compiler struct {
 	Instructions code.Instructions
 	Constants    []object.Object
-	SymbolTable
+	SymbolTable  *SymbolTable
+
+	scopes     []CompilationScope
+	scopeIndex int
 }
 
 type Bytecode struct {
@@ -20,14 +21,19 @@ type Bytecode struct {
 	Constants    []object.Object
 }
 
-func parse(input string) *ast.Program {
-	parser := parser.NewParser(lexer.NewLexer(input))
-	return parser.ParseProgram()
+type CompilationScope struct {
+	instructions code.Instructions
 }
 
 func New() *Compiler {
 	return &Compiler{
-		SymbolTable: *NewSymbolTable(),
+		SymbolTable: NewSymbolTable(),
+		scopes: []CompilationScope{
+			{
+				instructions: code.Instructions{},
+			},
+		},
+		scopeIndex: 0,
 	}
 }
 
@@ -96,7 +102,6 @@ func (c *Compiler) Compile(node ast.Node) error {
 		// }
 
 	case *ast.BlockStatement:
-		fmt.Println(node.Statements)
 		for _, statement := range node.Statements {
 			if err := c.Compile(statement); err != nil {
 				return err
@@ -126,13 +131,37 @@ func (c *Compiler) Compile(node ast.Node) error {
 		// case *ast.CallExpression:
 
 		// 	if node.Name ==
+	case *ast.FunctionLiteral:
+		c.enterScope()
+
+		c.Compile(node.Body)
+
+		compiledFunc := &object.CompiledFunction{
+			Instructions: c.scopes[c.scopeIndex].instructions,
+		}
+
+		c.leaveScope()
+
+		c.emit(code.OpConstant, c.addConstant(compiledFunc))
+	case *ast.ReturnStatement:
+		if err := c.Compile(node.ReturnValue); err != nil {
+			return err
+		}
+		c.emit(code.OpReturn)
+
+	case *ast.CallExpression:
+		err := c.Compile(node.Function)
+		if err != nil {
+			return err
+		}
+		c.emit(code.OpCall)
 	}
 
 	return nil
 }
 func (c *Compiler) Bytecode() *Bytecode {
 	return &Bytecode{
-		Instructions: c.Instructions,
+		Instructions: c.currentInstructions(),
 		Constants:    c.Constants,
 	}
 }
@@ -143,8 +172,9 @@ func (c *Compiler) addConstant(constant object.Object) int {
 }
 
 func (c *Compiler) emit(opCode code.OpCode, opreands ...int) int {
-	c.Instructions = append(c.Instructions, code.Make(opCode, opreands...))
-	return len(c.Instructions) - 1
+	instruciton := code.Make(opCode, opreands...)
+	c.scopes[c.scopeIndex].instructions = append(c.scopes[c.scopeIndex].instructions, instruciton)
+	return len(c.scopes[c.scopeIndex].instructions) - 1
 }
 
 func (c *Compiler) changeOpreand(pos int, opreand ...int) {
@@ -156,4 +186,21 @@ func (c *Compiler) changeOpreand(pos int, opreand ...int) {
 
 func (c *Compiler) replaceInstrucion(pos int, newInstruction []byte) {
 	c.Instructions[pos] = newInstruction
+}
+
+func (c *Compiler) currentInstructions() code.Instructions {
+	return c.scopes[c.scopeIndex].instructions
+}
+
+func (c *Compiler) enterScope() {
+	newScope := CompilationScope{
+		instructions: code.Instructions{},
+	}
+	c.scopes = append(c.scopes, newScope)
+	c.scopeIndex += 1
+}
+
+func (c *Compiler) leaveScope() {
+	c.scopes = c.scopes[:len(c.scopes)-1]
+	c.scopeIndex -= 1
 }

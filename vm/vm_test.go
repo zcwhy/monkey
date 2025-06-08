@@ -49,6 +49,50 @@ func TestGlobalLetStatements(t *testing.T) {
 	runVmTests(t, tests)
 }
 
+func TestCallingFunctionsWithoutArguments(t *testing.T) {
+	tests := []vmTestCase{
+		{
+			input: `
+			   let fivePlusTen = fn() { return 5 + 10; };
+			   fivePlusTen();
+			   `,
+			expected: 15,
+		},
+		{
+			input: `
+					   let one = fn() { return 1; };
+					   let two = fn() { return 2; };
+					   one() + two()
+					   `,
+			expected: 3,
+		},
+		{
+			input: `
+					   let a = fn() { return 1 };
+					   let b = fn() { return a() + 1 };
+					   let c = fn() { return b() + 1 };
+					   c();
+					   `,
+			expected: 3,
+		},
+		{
+			input: `
+		let earlyExit = fn() { return 99; 100; };
+		earlyExit();
+		`,
+			expected: 99,
+		},
+		{
+			input: `
+		let earlyExit = fn() { return 99; return 100; };
+		earlyExit();
+		`,
+			expected: 99,
+		},
+	}
+	runVmTests(t, tests)
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 

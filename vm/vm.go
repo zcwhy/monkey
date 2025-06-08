@@ -7,32 +7,49 @@ import (
 	"monkey/object"
 )
 
-const StackSize = 2048
-
-const GlobalsSize = 65536
+const (
+	StackSize   = 2048
+	GlobalsSize = 65536
+	FrameSize   = 1024
+)
 
 type VM struct {
-	intructions code.Instructions
-	constant    []object.Object
-	globals     []object.Object
+	constant []object.Object
+	globals  []object.Object
 
 	stack []object.Object
 	sp    int
+
+	frames     []Frame
+	frameIndex int
+}
+
+// call frame
+type Frame struct {
+	fn *object.CompiledFunction
+	ip int // return address
 }
 
 func New(byteCode *compiler.Bytecode) *VM {
-	return &VM{
-		intructions: byteCode.Instructions,
-		constant:    byteCode.Constants,
-		globals:     make([]object.Object, GlobalsSize),
+	mainFrame := Frame{fn: &object.CompiledFunction{Instructions: byteCode.Instructions}, ip: 0}
+
+	vm := &VM{
+		constant: byteCode.Constants,
+		globals:  make([]object.Object, GlobalsSize),
 
 		stack: make([]object.Object, 2048),
 		sp:    -1,
+
+		frames:     make([]Frame, FrameSize),
+		frameIndex: 0,
 	}
+
+	vm.frames[0] = mainFrame
+	return vm
 }
 
 func (v *VM) Run() error {
-	for _, instruction := range v.intructions {
+	for _, instruction := range v.currentFrame().fn.Instructions {
 		opCode := code.OpCode(instruction[0])
 
 		switch opCode {
@@ -50,6 +67,7 @@ func (v *VM) Run() error {
 			}
 		case code.OpTrue:
 			v.push(&object.Boolean{Value: true})
+
 		case code.OpSetGlobal:
 			symbolIndex := code.ReadUint16(instruction[1:])
 			v.globals[symbolIndex] = v.pop()
@@ -57,6 +75,16 @@ func (v *VM) Run() error {
 		case code.OpGetGlobal:
 			symbolIndex := code.ReadUint16(instruction[1:])
 			v.push(v.globals[symbolIndex])
+
+		case code.OpCall:
+			fn, ok := v.pop().(*object.CompiledFunction)
+			if !ok {
+				return fmt.Errorf("calling non-function")
+			}
+
+			v.pushFrame(Frame{fn: fn})
+
+		case code.OpReturn:
 		}
 
 	}
@@ -118,4 +146,18 @@ func (v *VM) pop() object.Object {
 
 func (v *VM) StackTop() object.Object {
 	return v.stack[v.sp]
+}
+
+func (v *VM) currentFrame() Frame {
+	return v.frames[v.frameIndex]
+}
+
+func (v *VM) pushFrame(f Frame) {
+	v.frames = append(v.frames, f)
+	v.frameIndex += 1
+}
+
+func (v *VM) popFrame() {
+	v.frames = v.frames[:len(v.frames)-1]
+	v.frameIndex -= 1
 }

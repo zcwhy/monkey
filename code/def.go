@@ -16,7 +16,9 @@ var instructionDefinitions = map[OpCode]*Definition{
 	OpTrue:          {"OpTrue", []int{}},
 	OpJumpNotTruthy: {"OpJumpNotTruthy", []int{2}}, // 这里操作数是跳转到第几条指令
 	OpSetGlobal:     {"OpSetGlobal", []int{2}},
-	OpGetGlobal:     {"OpSetGlobal", []int{2}},
+	OpGetGlobal:     {"OpGetGlobal", []int{2}},
+	OpReturn:        {"OpReturn", []int{}},
+	OpCall:          {"OpCall", []int{}},
 }
 
 func LookUp(code OpCode) (*Definition, error) {

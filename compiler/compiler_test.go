@@ -4,8 +4,11 @@ package compiler
 
 import (
 	"fmt"
+	"monkey/ast"
 	"monkey/code"
+	"monkey/lexer"
 	"monkey/object"
+	"monkey/parser"
 	"testing"
 )
 
@@ -13,6 +16,11 @@ type compilerTestCase struct {
 	input                string
 	expectedConstants    []interface{}
 	expectedInstructions code.Instructions
+}
+
+func parse(input string) *ast.Program {
+	parser := parser.NewParser(lexer.NewLexer(input))
+	return parser.ParseProgram()
 }
 
 func TestIntegerArithmetic(t *testing.T) {
@@ -96,6 +104,115 @@ func TestGlobalLetStatements(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestFunctions(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `fn() { return 5 + 10; }`,
+			expectedConstants: []interface{}{
+				5,
+				10,
+				code.Instructions{
+					code.Make(code.OpConstant, 0),
+					code.Make(code.OpConstant, 1),
+					code.Make(code.OpAdd),
+					code.Make(code.OpReturn),
+				}},
+			expectedInstructions: code.Instructions{
+				code.Make(code.OpConstant, 2),
+			}},
+	}
+	runCompilerTests(t, tests)
+}
+
+func TestCompilerScopes(t *testing.T) {
+	compiler := New()
+	if compiler.scopeIndex != 0 {
+		t.Errorf("scopeIndex wrong. got=%d, want=%d", compiler.scopeIndex, 0)
+	}
+
+	compiler.emit(code.OpMul)
+
+	compiler.enterScope()
+	if compiler.scopeIndex != 1 {
+		t.Errorf("scopeIndex wrong. got=%d, want=%d", compiler.scopeIndex, 1)
+	}
+
+	compiler.emit(code.OpSub)
+	if len(compiler.scopes[compiler.scopeIndex].instructions) != 1 {
+		t.Errorf("instructions length wrong. got=%d",
+			len(compiler.scopes[compiler.scopeIndex].instructions))
+	}
+
+	// last := compiler.scopes[compiler.scopeIndex].lastInstruction
+	// if last.Opcode != code.OpSub {
+	// 	t.Errorf("lastInstruction.Opcode wrong. got=%d, want=%d",
+	// 		last.Opcode, code.OpSub)
+	// }
+
+	compiler.leaveScope()
+	if compiler.scopeIndex != 0 {
+		t.Errorf("scopeIndex wrong. got=%d, want=%d",
+			compiler.scopeIndex, 0)
+	}
+
+	compiler.emit(code.OpAdd)
+	if len(compiler.scopes[compiler.scopeIndex].instructions) != 2 {
+		t.Errorf("instructions length wrong. got=%d",
+			len(compiler.scopes[compiler.scopeIndex].instructions))
+	}
+
+	// last = compiler.scopes[compiler.scopeIndex].lastInstruction
+	// if last.Opcode != code.OpAdd {
+	// 	t.Errorf("lastInstruction.Opcode wrong. got=%d, want=%d",
+	// 		last.Opcode, code.OpAdd)
+	// }
+
+	// previous := compiler.scopes[compiler.scopeIndex].previousInstruction
+	// if previous.Opcode != code.OpMul {
+	// 	t.Errorf("previousInstruction.Opcode wrong. got=%d, want=%d",
+	// 		previous.Opcode, code.OpMul)
+	// }
+}
+
+func TestFunctionCalls(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `fn() { return 24; }();`,
+			expectedConstants: []interface{}{
+				24,
+				code.Instructions{
+					code.Make(code.OpConstant, 0), // The literal "24"
+					code.Make(code.OpReturn),
+				},
+			},
+			expectedInstructions: code.Instructions{
+				code.Make(code.OpConstant, 1), // The compiled function
+				code.Make(code.OpCall),
+			},
+		},
+		{
+			input: `
+	let noArg = fn() { return 24; };
+	noArg();
+	`,
+			expectedConstants: []interface{}{
+				24,
+				code.Instructions{
+					code.Make(code.OpConstant, 0), // The literal "24"
+					code.Make(code.OpReturn),
+				},
+			},
+			expectedInstructions: code.Instructions{
+				code.Make(code.OpConstant, 1), // The compiled function
+				code.Make(code.OpSetGlobal, 0),
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpCall),
+			}},
+	}
+
+	runCompilerTests(t, tests)
+}
+
 func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 	t.Helper()
 
@@ -128,7 +245,7 @@ func testInstructions(
 ) error {
 	if len(actual) != len(expected) {
 		return fmt.Errorf("wrong instructions length.\nwant=%q\ngot =%q",
-			expected, actual)
+			code.Disassemble(expected), code.Disassemble(actual))
 	}
 
 	for i, ins := range expected {
@@ -159,6 +276,16 @@ func testConstants(
 				return fmt.Errorf("constant %d - testIntegerObject failed: %s",
 					i, err)
 			}
+		case code.Instructions:
+			fn, ok := actual[i].(*object.CompiledFunction)
+			if !ok {
+				return fmt.Errorf("constant %d - not a function: %T", i, actual[i])
+			}
+
+			err := testInstructions(constant, fn.Instructions)
+			if err != nil {
+				return fmt.Errorf("constant %d - testInstructions failed: %s", i, err)
+			}
 		}
 	}
 
@@ -178,4 +305,23 @@ func testIntegerObject(expected int64, actual object.Object) error {
 	}
 
 	return nil
+}
+
+func TestCompile(t *testing.T) {
+	input := `
+	let fivePlusTen = fn() { return 5 + 10; };
+	fivePlusTen();
+	`
+
+	program := parse(input)
+
+	compiler := New()
+	err := compiler.Compile(program)
+	if err != nil {
+		t.Fatalf("compiler error: %s", err)
+	}
+
+	bytecode := compiler.Bytecode()
+
+	fmt.Println(code.Disassemble(bytecode.Instructions))
 }

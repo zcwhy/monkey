@@ -19,6 +19,8 @@ func TestMake(t *testing.T) {
 		{OpJumpNotTruthy, []int{123}, []byte{byte(OpJumpNotTruthy), 0, 123}},
 		{OpSetGlobal, []int{123}, []byte{byte(OpSetGlobal), 0, 123}},
 		{OpGetGlobal, []int{123}, []byte{byte(OpGetGlobal), 0, 123}},
+		{OpReturn, []int{}, []byte{byte(OpReturn)}},
+		{OpCall, []int{}, []byte{byte(OpCall)}},
 	}
 
 	for _, tt := range tests {

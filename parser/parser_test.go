@@ -992,3 +992,10 @@ func checkParserErrors(t *testing.T, p *Parser) {
 	}
 	t.FailNow()
 }
+
+func TestParse(t *testing.T) {
+	input := `fn() { return 5 + 10 }`
+	parser := NewParser(lexer.NewLexer(input))
+	ast := parser.ParseProgram()
+	t.Log(ast)
+}

@@ -20,6 +20,8 @@ const (
 	OpJumpNotTruthy
 	OpSetGlobal
 	OpGetGlobal
+	OpReturn
+	OpCall
 )
 
 func Make(opCode OpCode, opreands ...int) []byte {
