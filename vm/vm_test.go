@@ -68,24 +68,24 @@ func TestCallingFunctionsWithoutArguments(t *testing.T) {
 		},
 		{
 			input: `
-					   let a = fn() { return 1 };
-					   let b = fn() { return a() + 1 };
-					   let c = fn() { return b() + 1 };
+					   let a = fn() { return 1; };
+					   let b = fn() { return a() + 1; };
+					   let c = fn() { return b() + 1; };
 					   c();
 					   `,
 			expected: 3,
 		},
 		{
 			input: `
-		let earlyExit = fn() { return 99; 100; };
-		earlyExit();
+						let earlyExit = fn() { return 99; 100; };
+						earlyExit();
 		`,
 			expected: 99,
 		},
 		{
 			input: `
-		let earlyExit = fn() { return 99; return 100; };
-		earlyExit();
+						let earlyExit = fn() { return 99; return 100; };
+						earlyExit();
 		`,
 			expected: 99,
 		},

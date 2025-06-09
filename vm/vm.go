@@ -20,7 +20,7 @@ type VM struct {
 	stack []object.Object
 	sp    int
 
-	frames     []Frame
+	frames     []*Frame
 	frameIndex int
 }
 
@@ -40,18 +40,21 @@ func New(byteCode *compiler.Bytecode) *VM {
 		stack: make([]object.Object, 2048),
 		sp:    -1,
 
-		frames:     make([]Frame, FrameSize),
+		frames:     make([]*Frame, FrameSize),
 		frameIndex: 0,
 	}
 
-	vm.frames[0] = mainFrame
+	vm.frames[0] = &mainFrame
 	return vm
 }
 
 func (v *VM) Run() error {
-	for _, instruction := range v.currentFrame().fn.Instructions {
+	for v.currentFrame().ip < len(v.currentFrame().fn.Instructions) {
+		ip := v.currentFrame().ip
+		instruction := v.currentFrame().fn.Instructions[ip]
 		opCode := code.OpCode(instruction[0])
 
+		v.currentFrame().ip++
 		switch opCode {
 		case code.OpConstant:
 			opreandNo, err := code.ReadOpreands(instruction)
@@ -82,9 +85,10 @@ func (v *VM) Run() error {
 				return fmt.Errorf("calling non-function")
 			}
 
-			v.pushFrame(Frame{fn: fn})
+			v.pushFrame(&Frame{fn: fn})
 
 		case code.OpReturn:
+			v.popFrame()
 		}
 
 	}
@@ -148,16 +152,18 @@ func (v *VM) StackTop() object.Object {
 	return v.stack[v.sp]
 }
 
-func (v *VM) currentFrame() Frame {
+func (v *VM) currentFrame() *Frame {
 	return v.frames[v.frameIndex]
 }
 
-func (v *VM) pushFrame(f Frame) {
-	v.frames = append(v.frames, f)
+func (v *VM) pushFrame(f *Frame) {
+	v.frames[v.frameIndex+1] = f
 	v.frameIndex += 1
 }
 
-func (v *VM) popFrame() {
-	v.frames = v.frames[:len(v.frames)-1]
+func (v *VM) popFrame() *Frame {
+	lastFrame := v.frames[v.frameIndex]
 	v.frameIndex -= 1
+
+	return lastFrame
 }

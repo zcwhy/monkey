@@ -128,9 +128,6 @@ func (c *Compiler) Compile(node ast.Node) error {
 
 		c.emit(code.OpGetGlobal, entry.Index)
 
-		// case *ast.CallExpression:
-
-		// 	if node.Name ==
 	case *ast.FunctionLiteral:
 		c.enterScope()
 

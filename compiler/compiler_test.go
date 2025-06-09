@@ -309,8 +309,9 @@ func testIntegerObject(expected int64, actual object.Object) error {
 
 func TestCompile(t *testing.T) {
 	input := `
-	let fivePlusTen = fn() { return 5 + 10; };
-	fivePlusTen();
+					   let a = fn() { return 1 };
+					   let b = fn() { return a() + 1 };
+					   b();
 	`
 
 	program := parse(input)
@@ -324,4 +325,5 @@ func TestCompile(t *testing.T) {
 	bytecode := compiler.Bytecode()
 
 	fmt.Println(code.Disassemble(bytecode.Instructions))
+	fmt.Println(bytecode.Constants[0])
 }
