@@ -4,6 +4,7 @@ type SymbolScope string
 
 const (
 	GlobalScope SymbolScope = "Global"
+	LocalScope  SymbolScope = "Local"
 )
 
 type SymbolTableEntry struct {
@@ -13,6 +14,7 @@ type SymbolTableEntry struct {
 }
 
 type SymbolTable struct {
+	outer     *SymbolTable // 链式嵌套结构
 	store     map[string]SymbolTableEntry
 	numSymbol int
 }
@@ -24,7 +26,20 @@ func NewSymbolTable() *SymbolTable {
 	}
 }
 
-func (s *SymbolTable) Set(name string, scope SymbolScope) SymbolTableEntry {
+func NewEnclosedSymbolTable(outer *SymbolTable) *SymbolTable {
+	return &SymbolTable{
+		store:     make(map[string]SymbolTableEntry),
+		numSymbol: 0,
+		outer:     outer,
+	}
+}
+
+func (s *SymbolTable) Define(name string) SymbolTableEntry {
+	scope := LocalScope
+	if s.outer == nil {
+		scope = GlobalScope
+	}
+
 	entry := SymbolTableEntry{
 		Name:  name,
 		Scope: scope,
@@ -36,7 +51,11 @@ func (s *SymbolTable) Set(name string, scope SymbolScope) SymbolTableEntry {
 	return entry
 }
 
-func (s *SymbolTable) Get(name string) (SymbolTableEntry, bool) {
+func (s *SymbolTable) Resolve(name string) (SymbolTableEntry, bool) {
 	entry, ok := s.store[name]
+
+	if !ok && s.outer != nil {
+		entry, ok = s.outer.Resolve(name)
+	}
 	return entry, ok
 }

@@ -113,7 +113,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 
-		entry := c.SymbolTable.Set(node.Name.Value, GlobalScope)
+		entry := c.SymbolTable.Define(node.Name.Value)
 		c.emit(code.OpSetGlobal, entry.Index)
 
 	case *ast.Boolean:
@@ -121,7 +121,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 			c.emit(code.OpTrue)
 		}
 	case *ast.Identifier:
-		entry, ok := c.SymbolTable.Get(node.Value)
+		entry, ok := c.SymbolTable.Resolve(node.Value)
 		if !ok {
 			return fmt.Errorf("undefined variable %s", node.Value)
 		}

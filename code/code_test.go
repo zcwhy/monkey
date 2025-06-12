@@ -21,6 +21,8 @@ func TestMake(t *testing.T) {
 		{OpGetGlobal, []int{123}, []byte{byte(OpGetGlobal), 0, 123}},
 		{OpReturn, []int{}, []byte{byte(OpReturn)}},
 		{OpCall, []int{}, []byte{byte(OpCall)}},
+		{OpGetLocal, []int{255}, []byte{byte(OpGetLocal), 255}},
+		{OpSetLocal, []int{255}, []byte{byte(OpSetLocal), 255}},
 	}
 
 	for _, tt := range tests {
@@ -34,11 +36,38 @@ func TestMake(t *testing.T) {
 		for i, b := range tt.expected {
 			if instruction[i] != tt.expected[i] {
 				t.Errorf("%s, wrong byte at pos %d. want=%d, got=%d",
-					string(tt.op), i, b, instruction[i])
+					instructionDefinitions[tt.op].Name, i, b, instruction[i])
 			}
 		}
 	}
 }
+
+// func TestReadOperands(t *testing.T) {
+// 	tests := []struct {
+// 		op        OpCode
+// 		operands  []int
+// 		bytesRead int
+// 	}{
+// 		{OpGetLocal, []int{255}, 1},
+// 	}
+
+// 	for _, tt := range tests {
+// 		ReadOpreands()
+// 		instruction := Make(tt.op, tt.operands...)
+
+// 		if len(instruction) != len(tt.expected) {
+// 			t.Errorf("instruction has wrong length. want=%d, got=%d",
+// 				len(tt.expected), len(instruction))
+// 		}
+
+// 		for i, b := range tt.expected {
+// 			if instruction[i] != tt.expected[i] {
+// 				t.Errorf("%s, wrong byte at pos %d. want=%d, got=%d",
+// 					string(tt.op), i, b, instruction[i])
+// 			}
+// 		}
+// 	}
+// }
 
 func TestFormatOreands(t *testing.T) {
 	t.Log(fomatOpreands([]int{1, 2, 3}))

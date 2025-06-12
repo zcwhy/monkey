@@ -22,6 +22,8 @@ const (
 	OpGetGlobal
 	OpReturn
 	OpCall
+	OpGetLocal
+	OpSetLocal
 )
 
 func Make(opCode OpCode, opreands ...int) []byte {
@@ -41,6 +43,8 @@ func Make(opCode OpCode, opreands ...int) []byte {
 	for i, opreand := range opreands {
 		iWidth := def.OpreandsWidth[i]
 		switch iWidth {
+		case 1:
+			instruction[pos] = byte(opreand)
 		case 2:
 			binary.BigEndian.PutUint16(instruction[pos:], uint16(opreand))
 		}
@@ -81,6 +85,8 @@ func ReadOpreands(instruction []byte) ([]int, error) {
 		switch width {
 		case 2:
 			opreands = append(opreands, int(binary.BigEndian.Uint16(instruction[offset:])))
+		case 1:
+			opreands = append(opreands, int(instruction[offset]))
 		}
 		offset += width
 	}
