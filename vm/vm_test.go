@@ -93,6 +93,57 @@ func TestCallingFunctionsWithoutArguments(t *testing.T) {
 	runVmTests(t, tests)
 }
 
+func TestCallingFunctionsWithBindings(t *testing.T) {
+	tests := []vmTestCase{
+		{
+			input: `
+			   let one = fn() { let one = 1; return one; };
+			   one();
+			   `,
+			expected: 1,
+		},
+		{
+			input: `
+			let oneAndTwo = fn() { let one = 1; let two = 2; return one + two; };
+			oneAndTwo();
+			`,
+			expected: 3,
+		},
+		{
+			input: `
+			let oneAndTwo = fn() { let one = 1; let two = 2; return one + two; };
+			let threeAndFour = fn() { let three = 3; let four = 4; return three + four; };
+			oneAndTwo() + threeAndFour();
+			`,
+			expected: 10,
+		},
+		{
+			input: `
+			let firstFoobar = fn() { let foobar = 50; return foobar; };
+			let secondFoobar = fn() { let foobar = 100; return foobar; };
+			firstFoobar() + secondFoobar();
+			`,
+			expected: 150,
+		},
+		{
+			input: `
+			let globalSeed = 50;
+			let minusOne = fn() {
+				let num = 1;
+				return globalSeed - num;
+			};
+			let minusTwo = fn() {
+				let num = 2;
+				return globalSeed - num;
+			};
+			minusOne() + minusTwo();
+			`,
+			expected: 97,
+		},
+	}
+	runVmTests(t, tests)
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 

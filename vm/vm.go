@@ -28,6 +28,15 @@ type VM struct {
 type Frame struct {
 	fn *object.CompiledFunction
 	ip int // return address
+
+	basePointer int
+}
+
+func NewFrame(fn *object.CompiledFunction, basePointer int) *Frame {
+	return &Frame{
+		fn:          fn,
+		basePointer: basePointer,
+	}
 }
 
 func New(byteCode *compiler.Bytecode) *VM {
@@ -84,11 +93,25 @@ func (v *VM) Run() error {
 			if !ok {
 				return fmt.Errorf("calling non-function")
 			}
-
-			v.pushFrame(&Frame{fn: fn})
+			v.pushFrame(NewFrame(fn, v.sp+1))
+			v.sp += fn.NumLocals
 
 		case code.OpReturn:
+			returnValue := v.pop()
+			v.sp = v.currentFrame().basePointer - 1
+			v.push(returnValue)
+
 			v.popFrame()
+
+		case code.OpGetLocal:
+			symbolIndex := code.ReadUint8(instruction[1:])
+			curFrame := v.currentFrame()
+			v.push(v.stack[curFrame.basePointer+int(symbolIndex)])
+
+		case code.OpSetLocal:
+			symbolIndex := code.ReadUint8(instruction[1:])
+			curFrame := v.currentFrame()
+			v.stack[curFrame.basePointer+int(symbolIndex)] = v.pop()
 		}
 
 	}

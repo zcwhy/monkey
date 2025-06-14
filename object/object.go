@@ -177,6 +177,7 @@ func (h *Hash) Type() ObjectType { return HASH_OBJ }
 
 type CompiledFunction struct {
 	Instructions code.Instructions
+	NumLocals    int
 }
 
 func (cf *CompiledFunction) Inspect() string {

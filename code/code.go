@@ -86,7 +86,7 @@ func ReadOpreands(instruction []byte) ([]int, error) {
 		case 2:
 			opreands = append(opreands, int(binary.BigEndian.Uint16(instruction[offset:])))
 		case 1:
-			opreands = append(opreands, int(instruction[offset]))
+			opreands = append(opreands, int(ReadUint8(instruction)))
 		}
 		offset += width
 	}
@@ -96,6 +96,8 @@ func ReadOpreands(instruction []byte) ([]int, error) {
 func ReadUint16(instruction []byte) uint16 {
 	return binary.BigEndian.Uint16(instruction)
 }
+
+func ReadUint8(ins []byte) uint8 { return uint8(ins[0]) }
 
 func fomatOpreands(opreands []int) string {
 	var out bytes.Buffer
