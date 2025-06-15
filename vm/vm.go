@@ -89,11 +89,18 @@ func (v *VM) Run() error {
 			v.push(v.globals[symbolIndex])
 
 		case code.OpCall:
+			numArgs := code.ReadUint8(instruction[1:])
+
 			fn, ok := v.pop().(*object.CompiledFunction)
 			if !ok {
 				return fmt.Errorf("calling non-function")
 			}
-			v.pushFrame(NewFrame(fn, v.sp+1))
+			if numArgs != uint8(fn.NumParameters) {
+				return fmt.Errorf("wrong number of arguments: want=%d, got=%d",
+					fn.NumParameters, numArgs)
+			}
+
+			v.pushFrame(NewFrame(fn, v.sp+1-int(numArgs)))
 			v.sp += fn.NumLocals
 
 		case code.OpReturn:

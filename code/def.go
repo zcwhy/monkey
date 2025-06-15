@@ -18,7 +18,7 @@ var instructionDefinitions = map[OpCode]*Definition{
 	OpSetGlobal:     {"OpSetGlobal", []int{2}},
 	OpGetGlobal:     {"OpGetGlobal", []int{2}},
 	OpReturn:        {"OpReturn", []int{}},
-	OpCall:          {"OpCall", []int{}},
+	OpCall:          {"OpCall", []int{1}},
 	OpSetLocal:      {"OpSetGlobal", []int{1}},
 	OpGetLocal:      {"OpGetGlobal", []int{1}},
 }

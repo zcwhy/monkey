@@ -20,7 +20,7 @@ func TestMake(t *testing.T) {
 		{OpSetGlobal, []int{123}, []byte{byte(OpSetGlobal), 0, 123}},
 		{OpGetGlobal, []int{123}, []byte{byte(OpGetGlobal), 0, 123}},
 		{OpReturn, []int{}, []byte{byte(OpReturn)}},
-		{OpCall, []int{}, []byte{byte(OpCall)}},
+		{OpCall, []int{1}, []byte{byte(OpCall), 1}},
 		{OpGetLocal, []int{255}, []byte{byte(OpGetLocal), 255}},
 		{OpSetLocal, []int{255}, []byte{byte(OpSetLocal), 255}},
 	}

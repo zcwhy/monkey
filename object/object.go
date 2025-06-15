@@ -176,8 +176,9 @@ func (h *Hash) Inspect() string {
 func (h *Hash) Type() ObjectType { return HASH_OBJ }
 
 type CompiledFunction struct {
-	Instructions code.Instructions
-	NumLocals    int
+	Instructions  code.Instructions
+	NumLocals     int
+	NumParameters int
 }
 
 func (cf *CompiledFunction) Inspect() string {

@@ -140,11 +140,18 @@ func (c *Compiler) Compile(node ast.Node) error {
 	case *ast.FunctionLiteral:
 		c.enterScope()
 
-		c.Compile(node.Body)
+		for _, parameter := range node.Parameters {
+			c.SymbolTable.Define(parameter.Value)
+		}
+
+		if err := c.Compile(node.Body); err != nil {
+			return err
+		}
 
 		compiledFunc := &object.CompiledFunction{
-			Instructions: c.scopes[c.scopeIndex].instructions,
-			NumLocals:    c.SymbolTable.numSymbol,
+			Instructions:  c.scopes[c.scopeIndex].instructions,
+			NumLocals:     c.SymbolTable.numSymbol,
+			NumParameters: len(node.Parameters),
 		}
 
 		c.leaveScope()
@@ -158,11 +165,18 @@ func (c *Compiler) Compile(node ast.Node) error {
 		c.emit(code.OpReturn)
 
 	case *ast.CallExpression:
+		for _, argument := range node.Arguments {
+			if err := c.Compile(argument); err != nil {
+				return err
+			}
+		}
+
 		err := c.Compile(node.Function)
 		if err != nil {
 			return err
 		}
-		c.emit(code.OpCall)
+
+		c.emit(code.OpCall, len(node.Arguments))
 	}
 
 	return nil
