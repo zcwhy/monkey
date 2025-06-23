@@ -113,6 +113,15 @@ var Builtins = []struct {
 			},
 		},
 	},
+	{
+		"print",
+		&Builtin{
+			Fn: func(args ...Object) Object {
+				fmt.Println(args)
+				return nil
+			},
+		},
+	},
 }
 
 func GetBuiltinByName(name string) *Builtin {
