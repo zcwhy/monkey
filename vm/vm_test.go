@@ -245,6 +245,26 @@ func TestCallingFunctionsWithWrongArguments(t *testing.T) {
 	}
 }
 
+func TestBuiltinFunctions(t *testing.T) {
+	case1 := vmTestCase{
+		input: `print("1","2")`,
+	}
+
+	program := parse(case1.input)
+	comp := compiler.New()
+	err := comp.Compile(program)
+	if err != nil {
+		t.Fatalf("compiler error: %s", err)
+	}
+
+	vm := New(comp.Bytecode())
+	err = vm.Run()
+	// if err == nil {
+	// 	t.Log(err)
+	// 	t.Fatalf("expected VM error but resulted in none.")
+	// }
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 

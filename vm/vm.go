@@ -77,6 +77,7 @@ func (v *VM) Run() error {
 			if err != nil {
 				return err
 			}
+
 		case code.OpTrue:
 			v.push(&object.Boolean{Value: true})
 
@@ -88,20 +89,12 @@ func (v *VM) Run() error {
 			symbolIndex := code.ReadUint16(instruction[1:])
 			v.push(v.globals[symbolIndex])
 
+		case code.OpGetBuiltin:
+			symbolIndex := code.ReadUint8(instruction[1:])
+			v.push(object.Builtins[symbolIndex].Builtin)
+
 		case code.OpCall:
-			numArgs := code.ReadUint8(instruction[1:])
-
-			fn, ok := v.pop().(*object.CompiledFunction)
-			if !ok {
-				return fmt.Errorf("calling non-function")
-			}
-			if numArgs != uint8(fn.NumParameters) {
-				return fmt.Errorf("wrong number of arguments: want=%d, got=%d",
-					fn.NumParameters, numArgs)
-			}
-
-			v.pushFrame(NewFrame(fn, v.sp+1-int(numArgs)))
-			v.sp += fn.NumLocals
+			v.executeCall(int(code.ReadUint8(instruction[1:])))
 
 		case code.OpReturn:
 			returnValue := v.pop()
@@ -122,6 +115,29 @@ func (v *VM) Run() error {
 		}
 
 	}
+	return nil
+}
+
+func (v *VM) executeCall(numArgs int) error {
+	switch fn := v.pop().(type) {
+	case *object.CompiledFunction:
+		if numArgs != fn.NumParameters {
+			return fmt.Errorf("wrong number of arguments: want=%d, got=%d",
+				fn.NumParameters, numArgs)
+		}
+
+		v.pushFrame(NewFrame(fn, v.sp+1-int(numArgs)))
+		v.sp += fn.NumLocals
+	case *object.Builtin:
+		args := v.stack[v.sp-numArgs+1 : v.sp+1]
+		result := fn.Fn(args...)
+		if result == nil {
+
+		}
+	default:
+		return fmt.Errorf("calling non-function")
+	}
+
 	return nil
 }
 

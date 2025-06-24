@@ -117,7 +117,9 @@ var Builtins = []struct {
 		"print",
 		&Builtin{
 			Fn: func(args ...Object) Object {
-				fmt.Println(args)
+				for _, arg := range args {
+					fmt.Println(arg.Inspect())
+				}
 				return nil
 			},
 		},

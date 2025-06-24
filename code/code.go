@@ -24,6 +24,7 @@ const (
 	OpCall
 	OpGetLocal
 	OpSetLocal
+	OpGetBuiltin
 )
 
 func Make(opCode OpCode, opreands ...int) []byte {

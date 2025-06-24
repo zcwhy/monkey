@@ -21,6 +21,7 @@ var instructionDefinitions = map[OpCode]*Definition{
 	OpCall:          {"OpCall", []int{1}},
 	OpSetLocal:      {"OpSetGlobal", []int{1}},
 	OpGetLocal:      {"OpGetGlobal", []int{1}},
+	OpGetBuiltin:    {"OpGetBuiltin", []int{1}},
 }
 
 func LookUp(code OpCode) (*Definition, error) {
